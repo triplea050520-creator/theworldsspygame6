@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operation: Ironveil</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+    :root {
+      --bg: #090104;
+      --panel: rgba(38, 8, 8, 0.68);
+      --panel2: rgba(255, 56, 34, 0.055);
+      --red: #ff3f36;
+      --red2: #ff7350;
+      --amber: #ffb13b;
+      --dim: #9e2b22;
+      --dimmer: #5d1411;
+      --border: rgba(255, 75, 54, 0.25);
+      --border2: rgba(255, 177, 59, 0.28);
+      --ok: #44ffaa;
+      --text: #ffbeb3;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255, 65, 34, 0.20), transparent 26%),
+        radial-gradient(circle at 86% 14%, rgba(255, 177, 59, 0.13), transparent 24%),
+        radial-gradient(circle at 50% 105%, rgba(255, 58, 36, 0.16), transparent 35%),
+        linear-gradient(135deg, #140204, #030103 48%, #140502);
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--red);
+      overflow-x: hidden;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.12} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%,75%{transform:translateX(-10px)} 50%{transform:translateX(10px)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes popIn { 0%{transform:scale(.3);opacity:0} 65%{transform:scale(1.18)} 100%{transform:scale(1);opacity:1} }
+    @keyframes defused { 0%{letter-spacing:.05em;opacity:0;filter:blur(12px)} 100%{letter-spacing:.35em;opacity:1;filter:blur(0)} }
+    @keyframes redglow { 0%,100%{text-shadow:0 0 12px rgba(255,60,54,.45),0 0 34px rgba(255,60,54,.18)} 50%{text-shadow:0 0 30px rgba(255,60,54,1),0 0 75px rgba(255,90,54,.5),0 0 120px rgba(255,177,59,.20)} }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.62;transform:scale(1.015)} }
+    @keyframes sweep { from{transform:translateX(-140%) skewX(-18deg)} to{transform:translateX(280%) skewX(-18deg)} }
+    @keyframes dangerScan { 0%{transform:translateY(-12vh);opacity:0} 12%{opacity:.8} 100%{transform:translateY(112vh);opacity:0} }
+    @keyframes orbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    .root {
+      min-height: 100vh;
+      position: relative;
+      isolation: isolate;
+      padding: 26px 16px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background:
+        linear-gradient(90deg, rgba(255,64,42,.025) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,64,42,.022) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 20%, rgba(255,80,42,.16), transparent 48%),
+        radial-gradient(ellipse at 50% 120%, rgba(255,177,59,.08), transparent 48%);
+      background-size: 54px 54px, 54px 54px, auto, auto;
+    }
+
+    .root::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,70,48,.045) 0px, rgba(255,70,48,.045) 1px, transparent 1px, transparent 5px),
+        radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,.75) 100%);
+      mix-blend-mode: screen;
+    }
+
+    .root::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 80px;
+      z-index: 99;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(255,70,48,.12), transparent);
+      animation: dangerScan 7s linear infinite;
+    }
+
+    .stage {
+      width: 100%;
+      max-width: 880px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hud-panel {
+      position: relative;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(135deg, rgba(255,75,54,.10), transparent 38%),
+        linear-gradient(180deg, rgba(18,2,4,.88), rgba(10,1,3,.78));
+      box-shadow:
+        0 0 0 1px rgba(255,177,59,.035) inset,
+        0 22px 70px rgba(0,0,0,.35),
+        0 0 36px rgba(255,50,36,.08);
+      backdrop-filter: blur(10px);
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .hud-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, var(--red) 0 46px, transparent 46px calc(100% - 46px), var(--red) calc(100% - 46px)),
+        linear-gradient(90deg, var(--red) 0 46px, transparent 46px calc(100% - 46px), var(--red) calc(100% - 46px));
+      background-size: 100% 2px;
+      background-position: top, bottom;
+      background-repeat: no-repeat;
+      opacity: .55;
+    }
+
+    .topbar {
+      width: 100%;
+      max-width: 880px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 16px 18px;
+    }
+
+    .op-label { font-size: 9px; letter-spacing: 5px; color: var(--dimmer); }
+    .op-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: 4px;
+      margin-top: 4px;
+      text-shadow: 0 0 20px rgba(255,64,42,.35);
+    }
+    .difficulty { font-size: 9px; letter-spacing: 3px; color: var(--amber); margin-top: 4px; }
+
+    .timer-wrap { text-align: center; min-width: 210px; }
+    .timer-label { font-size: 9px; letter-spacing: 4px; color: var(--dim); margin-bottom: 4px; }
+    .timer {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(30px, 6vw, 52px);
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: .06em;
+      text-shadow: 0 0 18px rgba(255,60,54,.55);
+    }
+
+    .print-btn-wrap { text-align: right; }
+
+    .title-card {
+      max-width: 760px;
+      margin: 34px auto 0;
+      padding: 30px 26px 26px;
+      text-align: center;
+    }
+    .big-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(36px, 8vw, 74px);
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: .16em;
+      animation: redglow 3s ease infinite;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 8px 18px;
+      border: 1px solid var(--border2);
+      background: linear-gradient(90deg, rgba(255,177,59,.13), rgba(255,56,36,.06));
+      color: var(--amber);
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 4px;
+      animation: pulse 2s infinite;
+    }
+
+    .typed-box {
+      margin-top: 22px;
+      padding: 22px 24px;
+      min-height: 90px;
+      text-align: left;
+      border-radius: 18px;
+      border: 1px solid rgba(255,75,54,.20);
+      background: rgba(0,0,0,.24);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,75,54,.18);
+      background: linear-gradient(180deg, rgba(255,56,36,.075), rgba(0,0,0,.16));
+      text-align: left;
+    }
+    .stat small { display: block; color: var(--dimmer); font-size: 9px; letter-spacing: 3px; }
+    .stat strong { display: block; margin-top: 7px; color: var(--red2); font-size: 13px; }
+
+    .warning-box {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,177,59,.24);
+      background: linear-gradient(135deg, rgba(255,177,59,.11), rgba(255,56,36,.035));
+      text-align: left;
+    }
+    .warning-box small { color: var(--amber); letter-spacing: 4px; font-size: 9px; }
+    .warning-box p { color: #b85628; font-size: 12px; line-height: 1.8; margin-top: 7px; }
+
+    .button-row { display: flex; gap: 12px; margin-top: 20px; }
+    button {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      background: transparent;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 34%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-140%) skewX(-18deg);
+      pointer-events: none;
+    }
+    button:hover::after { animation: sweep .75s ease; }
+
+    .btn-primary {
+      flex: 2;
+      padding: 17px 18px;
+      border: 1px solid rgba(255,177,59,.55);
+      color: #ffd089;
+      background: linear-gradient(135deg, rgba(255,177,59,.18), rgba(255,48,36,.10));
+      box-shadow: 0 0 30px rgba(255,80,36,.14);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(255,177,59,.26), rgba(255,48,36,.16));
+      box-shadow: 0 0 45px rgba(255,90,36,.24);
+    }
+    .btn-secondary {
+      flex: 1;
+      padding: 17px 18px;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      background: rgba(0,0,0,.12);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+    .btn-secondary:hover { color: var(--red2); border-color: rgba(255,115,80,.45); }
+
+    .progress-wrap {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .progress-bars { display: flex; gap: 6px; flex: 1; }
+    .bar {
+      flex: 1;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,75,54,.09);
+      border: 1px solid rgba(255,75,54,.12);
+      overflow: hidden;
+    }
+    .bar.done, .bar.current {
+      background: linear-gradient(90deg, var(--red), var(--amber));
+      box-shadow: 0 0 16px rgba(255,75,54,.38);
+    }
+    .bar.current { opacity: .78; }
+    .progress-count { color: var(--dimmer); font-size: 10px; letter-spacing: 2px; }
+
+    .code-panel {
+      width: 100%;
+      max-width: 880px;
+      margin-bottom: 22px;
+      padding: 18px 18px 20px;
+      text-align: center;
+    }
+    .section-label { color: var(--dimmer); font-size: 9px; letter-spacing: 4px; margin-bottom: 13px; }
+    .code-slots { display: flex; justify-content: center; gap: 12px; }
+    .slot {
+      width: clamp(48px, 10vw, 68px);
+      height: clamp(56px, 11vw, 78px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,75,54,.16);
+      background: rgba(0,0,0,.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      color: rgba(255,75,54,.24);
+      font-size: 9px;
+      letter-spacing: 1px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,.25);
+    }
+    .slot.revealed {
+      color: #ffd0c8;
+      font-size: clamp(20px,4vw,30px);
+      font-weight: 900;
+      border-color: rgba(255,177,59,.55);
+      background: linear-gradient(180deg, rgba(255,75,54,.20), rgba(255,177,59,.08));
+      box-shadow: 0 0 26px rgba(255,75,54,.22), inset 0 0 20px rgba(255,177,59,.05);
+    }
+    .slot.current {
+      border-color: rgba(255,177,59,.45);
+      color: rgba(255,177,59,.42);
+    }
+
+    .puzzle-card {
+      width: 100%;
+      max-width: 880px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    .puzzle-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(255,75,54,.16);
+      padding-bottom: 15px;
+      margin-bottom: 16px;
+    }
+    .module-meta { color: var(--dimmer); font-size: 9px; letter-spacing: 4px; margin-bottom: 7px; }
+    .module-title {
+      color: #ffdfd7;
+      font-size: clamp(20px,4.5vw,32px);
+      letter-spacing: 3px;
+      font-family: 'Orbitron', sans-serif;
+      text-shadow: 0 0 22px rgba(255,64,42,.28);
+    }
+    .category {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,177,59,.24);
+      color: var(--amber);
+      background: rgba(255,177,59,.055);
+      font-size: 9px;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    .briefing {
+      color: #a94735;
+      font-size: 13px;
+      line-height: 1.75;
+      font-style: italic;
+      margin-bottom: 18px;
+    }
+    .classified {
+      border: 1px solid rgba(255,75,54,.18);
+      border-radius: 18px;
+      padding: 18px 20px;
+      background:
+        linear-gradient(90deg, rgba(255,75,54,.035) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,75,54,.025) 1px, transparent 1px),
+        rgba(2,0,1,.46);
+      background-size: 28px 28px;
+      box-shadow: inset 0 0 30px rgba(0,0,0,.30);
+    }
+    .line {
+      font-size: 13px;
+      line-height: 2.05;
+      white-space: pre-wrap;
+      color: #a34236;
+    }
+    .line.data { color: #ff7162; text-shadow: 0 0 12px rgba(255,64,42,.12); }
+    .line.head { color: #ffb13b; letter-spacing: 1px; }
+    .hint-box {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,177,59,.24);
+      background: rgba(255,177,59,.055);
+      color: #d28338;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .hint-box span { font-size: 9px; letter-spacing: 3px; color: var(--amber); }
+
+    .input-row {
+      width: 100%;
+      max-width: 880px;
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 14px;
+    }
+    .answer-label {
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--dimmer);
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 13px 15px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,75,54,.38);
+      background: rgba(0,0,0,.28);
+      color: #ffd0c8;
+      outline: none;
+      font-size: 15px;
+      caret-color: var(--amber);
+      box-shadow: inset 0 0 20px rgba(0,0,0,.25);
+    }
+    input:focus {
+      border-color: rgba(255,177,59,.55);
+      box-shadow: 0 0 20px rgba(255,177,59,.10), inset 0 0 20px rgba(0,0,0,.25);
+    }
+    .confirm, .hintbtn {
+      padding: 0 20px;
+      border: 1px solid rgba(255,75,54,.28);
+      color: var(--red2);
+      background: rgba(255,75,54,.06);
+      font-size: 11px;
+      letter-spacing: 3px;
+      white-space: nowrap;
+    }
+    .confirm {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      color: #ffd0c8;
+      border-color: rgba(255,177,59,.42);
+      background: linear-gradient(135deg, rgba(255,177,59,.15), rgba(255,75,54,.09));
+    }
+    .hintbtn { color: #c96b33; }
+
+    .status {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-align: center;
+      margin-top: 2px;
+    }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--red2); }
+    .shake { animation: shake .45s ease; }
+    .fade-up { animation: fadeUp .35s ease; }
+    .pop-in { animation: popIn .4s ease both; }
+
+    .end-screen {
+      justify-content: center;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255,75,54,.12), transparent 34%),
+        #080101;
+    }
+    .end-card {
+      width: min(560px, 100%);
+      padding: 34px 26px;
+    }
+    .end-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(32px,7vw,58px);
+      font-weight: 900;
+      letter-spacing: .2em;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 720px) {
+      .topbar { grid-template-columns: 1fr; text-align: center; }
+      .print-btn-wrap { text-align: center; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .button-row, .input-row { flex-direction: column; }
+      .answer-label { justify-content: center; }
+      .puzzle-head { flex-direction: column; align-items: stretch; }
+      .category { align-self: flex-start; }
+    }
+
+    @media print {
+      body { background: #fff !important; }
+      .no-print { display: none !important; }
+      .pw { padding: 20px; color: #000; font-family: 'Courier New', monospace; }
+      .pt { font-size: 20px; font-weight: bold; text-align: center; letter-spacing: 4px; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 6px; }
+      .ps { font-size: 10px; text-align: center; color: #666; letter-spacing: 3px; margin-bottom: 18px; }
+      .ptag { text-align: center; font-size: 11px; font-weight: bold; letter-spacing: 5px; border: 2px solid #000; padding: 4px; margin-bottom: 16px; }
+      .pm { border: 1px solid #000; padding: 14px 16px; margin-bottom: 13px; page-break-inside: avoid; }
+      .pmh { font-weight: bold; font-size: 12px; letter-spacing: 2px; border-bottom: 1px dashed #ccc; padding-bottom: 6px; margin-bottom: 9px; display: flex; justify-content: space-between; }
+      .pmc { font-weight: normal; font-size: 10px; color: #666; }
+      .pb { font-size: 10px; color: #555; font-style: italic; margin-bottom: 8px; }
+      .pl { font-size: 11px; line-height: 1.9; white-space: pre-wrap; }
+      .pa { margin-top: 12px; border-top: 1px solid #ddd; padding-top: 9px; font-size: 11px; }
+      .pbox { display: inline-block; min-width: 130px; height: 24px; border-bottom: 2px solid #000; margin-left: 8px; }
+      .pcode { border: 2px solid #000; padding: 14px; text-align: center; margin-top: 16px; }
+      .pcl { font-weight: bold; font-size: 14px; letter-spacing: 4px; margin-bottom: 12px; }
+      .pcsl { display: flex; justify-content: center; gap: 8px; }
+      .pcs { width: 46px; height: 46px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+      .pfoot { margin-top: 12px; font-size: 9px; color: #aaa; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const PUZZLES = [
+      {
+        id: 1,
+        codename: "SHADOW SHIFT",
+        category: "KEYWORD CAESAR",
+        briefing: "The cipher shift is not a number — it is the length of a word you must identify from a clue. Derive it, then decode.",
+        lines: [
+          "STEP 1 — DERIVE THE SHIFT VALUE:",
+          "",
+          "  Complete this sentence with the correct word:",
+          "  'A spy always operates under a _________.'",
+          "",
+          "  The missing word means a false or concealed identity.",
+          "  Count its letters — that number is your Caesar shift.",
+          "",
+          "STEP 2 — DECODE (subtract your shift from each letter):",
+          "",
+          "  CIPHERTEXT:  B  ·  W  ·  F  ·  N  ·  Y  ·  M",
+          "",
+          "  (Alphabet: A=0, B=1, C=2 ... Z=25.",
+          "   If subtracting gives a negative number, add 26.)",
+          "",
+          "What 6-letter word does the message spell?",
+        ],
+        hint: "The missing word is COVER (5 letters). Shift = 5. Subtract 5 from each letter's position.",
+        answer: "WRAITH",
+        unlocks: 7,
+      },
+      {
+        id: 2,
+        codename: "CHAIN OF COMMAND",
+        category: "LOGIC GRID",
+        briefing: "Five operatives are ranked by performance from 1st to 5th. Using only the clues below, identify who holds the 3rd position.",
+        lines: [
+          "OPERATIVES:  CIPHER · JACKAL · ORACLE · SPHINX · TALON",
+          "RANKINGS:    1st (best) through 5th (worst)",
+          "",
+          "CLUES:",
+          "",
+          "  ①  SPHINX holds the 1st rank.",
+          "  ②  CIPHER holds the last rank (5th).",
+          "  ③  TALON is ranked exactly one position",
+          "     better than ORACLE.",
+          "  ④  JACKAL is ranked exactly one position",
+          "     worse than ORACLE.",
+          "  ⑤  ORACLE is not ranked in the top 2.",
+          "",
+          "What is the codename of the operative ranked 3rd?",
+        ],
+        hint: "From ③ and ④, ORACLE sits between TALON and JACKAL. From ⑤, ORACLE ≥ 3. Only one position works.",
+        answer: "ORACLE",
+        unlocks: 3,
+      },
+      {
+        id: 3,
+        codename: "FINAL LETTER",
+        category: "ACROSTIC — LAST LETTERS",
+        briefing: "A word has been hidden inside a sentence — not in the meaning, and not in the first letters. Look elsewhere in the structure.",
+        lines: [
+          "INTERCEPTED MESSAGE:",
+          "",
+          '  "SHADOWS TARGET YOUR ALIBI RISK CODE"',
+          "",
+          "The hidden word is formed by taking the LAST LETTER",
+          "of each word in the message, in order.",
+          "",
+          "Extract them carefully.",
+          "What 6-letter word do they spell?",
+        ],
+        hint: "shadowS · targeT · youR · alibI · risK · codE — read those letters in sequence.",
+        answer: "STRIKE",
+        unlocks: 5,
+      },
+      {
+        id: 4,
+        codename: "MISSING VOWELS",
+        category: "CONSONANT DECODE",
+        briefing: "The enemy stripped all vowels before encoding. Each number maps to a letter's alphabet position (A=1...Z=26) — but only consonants were encoded. Restore the word.",
+        lines: [
+          "ENCODED (consonants only, A=1...Z=26):",
+          "",
+          "  6  ·  12  ·  14  ·  20",
+          "",
+          "Decode each number to its letter.",
+          "You will get four consonants.",
+          "Insert the missing vowel(s) to form a real word.",
+          "",
+          "CONTEXT CLUE:",
+          "  The completed word is a type of rock used",
+          "  throughout history to start fire —",
+          "  a critical tool for any field operative.",
+          "",
+          "What is the word?",
+        ],
+        hint: "6=F, 12=L, 14=N, 20=T → F_L_NT. One vowel fits between L and N to make a common word.",
+        answer: "FLINT",
+        unlocks: 1,
+      },
+      {
+        id: 5,
+        codename: "DEFINITION CHAIN",
+        category: "FIRST-LETTER EXTRACTION",
+        briefing: "Each clue defines a spy-related word. Solve every clue, then take only the first letter of each answer. Read the first letters in order — they spell the operative's codename.",
+        lines: [
+          "SOLVE EACH CLUE — THEN TAKE ITS FIRST LETTER:",
+          "",
+          "  Clue 1 :  A system of secret writing or encoding.",
+          "            (6 letters)",
+          "",
+          "  Clue 2 :  A field spy working undercover.",
+          "            (9 letters)",
+          "",
+          "  Clue 3 :  An unauthorized entry into a",
+          "            secure system or location. (6 letters)",
+          "",
+          "  Clue 4 :  A prearranged secret meeting point.",
+          "            (10 letters)",
+          "",
+          "  Clue 5 :  A person or information of",
+          "            intelligence value. (5 letters)",
+          "",
+          "Read the 5 first letters in order.",
+          "What codename do they spell?",
+        ],
+        hint: "CIPHER · OPERATIVE · BREACH · RENDEZVOUS · ASSET — take the first letter of each.",
+        answer: "COBRA",
+        unlocks: 9,
+      },
+    ];
+
+    const TOTAL_TIME = 5 * 60;
+    const app = document.getElementById("app");
+    let screen = "intro";
+    let puzzleIdx = 0;
+    let unlockedDigits = [];
+    let input = "";
+    let time = TOTAL_TIME;
+    let showHint = false;
+    let status = null;
+    let latestPop = -1;
+    let timerId = null;
+    let introTyped = 0;
+    let introTypingId = null;
+
+    const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    const esc = (s) => String(s).replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
+
+    function lineClass(line) {
+      if (!line) return "line";
+      if (
+        line.startsWith("STEP") ||
+        line.startsWith("CLUE") ||
+        line.startsWith("CONTEXT") ||
+        line.startsWith("SOLVE") ||
+        line.startsWith("INTERCEPTED") ||
+        line.startsWith("ENCODED") ||
+        line.startsWith("OPERATIVES") ||
+        line.startsWith("RANKINGS")
+      ) return "line head";
+      if (line.startsWith("  ") || line.includes("·") || line.includes("→") || line.includes("=") || line.includes("①") || line.includes("②") || line.includes("③") || line.includes("④") || line.includes("⑤")) return "line data";
+      return "line";
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      if (screen !== "game") return;
+      timerId = setInterval(() => {
+        if (screen !== "game") return clearInterval(timerId);
+        time -= 1;
+        if (time <= 0) {
+          screen = "failed";
+          renderFailed();
+        } else {
+          const timer = document.querySelector("#timer");
+          if (timer) {
+            timer.textContent = fmt(time);
+            const critical = time < 60;
+            timer.style.color = critical ? "#ffb13b" : "var(--red)";
+            timer.style.textShadow = critical ? "0 0 26px rgba(255,177,59,.75)" : "0 0 18px rgba(255,60,54,.55)";
+            timer.style.animation = critical ? "blink .7s infinite" : "none";
+          }
+        }
+      }, 1000);
+    }
+
+    function renderIntro() {
+      const msg = "URGENT. A DEVICE HAS BEEN ACTIVATED. FIVE MODULES GUARD THE DISARM CODE. DIFFICULTY: VERY HARD. EACH PUZZLE REQUIRES MULTIPLE STEPS. THINK CAREFULLY. YOU HAVE FIVE MINUTES. DO NOT WASTE THEM.";
+      app.innerHTML = `
+        <main class="root">
+          <section class="stage title-card hud-panel">
+            <div class="op-label">◈ OPERATION</div>
+            <div class="big-title">IRONVEIL</div>
+            <div class="badge">◈ VERY HARD DIFFICULTY ◈</div>
+
+            <div class="typed-box">
+              <span>${esc(msg.slice(0, introTyped))}</span><span style="animation:blink 1s infinite;color:var(--amber);">▋</span>
+            </div>
+
+            <div class="stat-grid">
+              ${[
+                ["⏱","TIME LIMIT","5:00 MINUTES"],
+                ["🔐","MODULES","5 · VERY HARD"],
+                ["🔢","CODE LENGTH","5 DIGITS"],
+                ["✍","ANSWERS","WORDS — NOT NUMBERS"],
+              ].map(([ic,lb,vl]) => `
+                <div class="stat">
+                  <small>${ic} ${lb}</small>
+                  <strong>${vl}</strong>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="warning-box">
+              <small>◈ FIELD WARNING</small>
+              <p>These modules require multi-step reasoning: deriving hidden values, reading encoded structure, logic deduction, and vocabulary. Harder than HARD. Not yet EXTREME. Proceed with focus.</p>
+            </div>
+
+            <div class="button-row">
+              <button class="btn-primary" id="startBtn">⬛ BEGIN MISSION</button>
+              <button class="btn-secondary" id="printBtn">PRINT BRIEFING</button>
+            </div>
+          </section>
+        </main>
+      `;
+
+      document.getElementById("startBtn").onclick = () => {
+        screen = "game";
+        renderGame();
+        startTimer();
+      };
+      document.getElementById("printBtn").onclick = renderPrint;
+
+      clearTimeout(introTypingId);
+      if (introTyped < msg.length && screen === "intro") {
+        introTypingId = setTimeout(() => {
+          introTyped += 1;
+          renderIntro();
+        }, 20);
+      }
+    }
+
+    function renderPrint() {
+      app.innerHTML = `
+        <div class="pw">
+          <div class="no-print" style="padding:12px 16px;background:#1a0404;color:#ff4444;font-family:monospace;margin-bottom:16px;display:flex;align-items:center;gap:16px;">
+            <span>⬛ Print dialog opening…</span>
+            <button id="backBtn" style="padding:5px 14px;background:transparent;border:1px solid #ff4444;color:#ff4444;cursor:pointer;font-family:monospace;">← BACK</button>
+          </div>
+          <div class="pt">OPERATION : IRONVEIL</div>
+          <div class="ptag">◈ VERY HARD DIFFICULTY ◈</div>
+          <div class="ps">CLASSIFIED FIELD BRIEFING · AGENT COPY · EYES ONLY</div>
+          <p class="pl" style="padding:10px;border:1px solid #ccc;margin-bottom:14px;color:#444;font-size:10px;">
+            MISSION: A device with an active detonation sequence is armed. Solve all 5 modules to retrieve the 5-digit disarm code.
+            Each correct answer is a word that unlocks one digit. Collect all 5 and enter the code before time expires. You have 5 minutes.
+          </p>
+          ${PUZZLES.map(p => `
+            <div class="pm">
+              <div class="pmh">
+                <span>MODULE ${String(p.id).padStart(2,"0")} · ${esc(p.codename)}</span>
+                <span class="pmc">[${esc(p.category)}]</span>
+              </div>
+              <div class="pb">${esc(p.briefing)}</div>
+              ${p.lines.map(l => `<div class="pl">${l ? esc(l) : "&nbsp;"}</div>`).join("")}
+              <div class="pa">ANSWER: <span class="pbox"></span></div>
+            </div>
+          `).join("")}
+          <div class="pcode">
+            <div class="pcl">DISARM CODE</div>
+            <div class="pcsl">${[1,2,3,4,5].map(n => `<div class="pcs">DIGIT<br>${n}</div>`).join("")}</div>
+          </div>
+          <div class="pfoot">OPERATION: IRONVEIL · TOP SECRET · VERY HARD · DESTROY AFTER USE</div>
+        </div>
+      `;
+      document.getElementById("backBtn").onclick = () => {
+        if (screen === "game") renderGame();
+        else renderIntro();
+      };
+      setTimeout(() => window.print(), 350);
+    }
+
+    function renderTopbar() {
+      const critical = time < 60;
+      return `
+        <header class="topbar hud-panel">
+          <div>
+            <div class="op-label">◈ OPERATION</div>
+            <div class="op-name">IRONVEIL</div>
+            <div class="difficulty">VERY HARD</div>
+          </div>
+          <div class="timer-wrap">
+            <div class="timer-label">TIME REMAINING</div>
+            <div id="timer" class="timer" style="color:${critical ? "#ffb13b" : "var(--red)"};animation:${critical ? "blink .7s infinite" : "none"};">${fmt(time)}</div>
+          </div>
+          <div class="print-btn-wrap">
+            <button class="btn-secondary no-print" id="printGame" style="padding:10px 14px;display:inline-block;">PRINT</button>
+          </div>
+        </header>
+      `;
+    }
+
+    function renderProgress() {
+      return `
+        <section class="progress-wrap">
+          <div class="progress-bars">
+            ${PUZZLES.map((_, i) => `<div class="bar ${i < unlockedDigits.length ? "done" : i === puzzleIdx ? "current" : ""}"></div>`).join("")}
+          </div>
+          <div class="progress-count">${unlockedDigits.length} / 5</div>
+        </section>
+      `;
+    }
+
+    function renderCodeSlots() {
+      return `
+        <section class="code-panel hud-panel">
+          <div class="section-label">DISARM CODE — EACH MODULE UNLOCKS ONE DIGIT</div>
+          <div class="code-slots">
+            ${Array.from({ length: 5 }).map((_, i) => {
+              const revealed = i < unlockedDigits.length;
+              const isCurrent = i === unlockedDigits.length;
+              const isLatest = i === latestPop && revealed;
+              return `<div class="slot ${revealed ? "revealed" : ""} ${isCurrent ? "current" : ""} ${isLatest ? "pop-in" : ""}">${revealed ? unlockedDigits[i] : isCurrent ? "NEXT" : "—"}</div>`;
+            }).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderGame() {
+      const p = PUZZLES[puzzleIdx];
+      app.innerHTML = `
+        <main class="root">
+          ${renderTopbar()}
+          ${renderProgress()}
+          ${renderCodeSlots()}
+
+          <section class="puzzle-card hud-panel ${status === "err" ? "shake" : "fade-up"}">
+            <div class="puzzle-head">
+              <div>
+                <div class="module-meta">MODULE ${String(p.id).padStart(2,"0")} OF 05 · VERY HARD</div>
+                <div class="module-title">${esc(p.codename)}</div>
+              </div>
+              <div class="category">${esc(p.category)}</div>
+            </div>
+
+            <div class="briefing">${esc(p.briefing)}</div>
+
+            <div class="classified">
+              ${p.lines.map(line => `<div class="${lineClass(line)}">${line ? esc(line) : "&nbsp;"}</div>`).join("")}
+            </div>
+
+            ${showHint ? `<div class="hint-box"><span>CLASSIFIED HINT › </span>${esc(p.hint)}</div>` : ""}
+          </section>
+
+          <section class="input-row">
+            <span class="answer-label">ANSWER:</span>
+            <input id="answerInput" value="${esc(input)}" placeholder="type your answer here…" autocomplete="off" />
+            <button id="confirmBtn" class="confirm" ${input.trim() ? "" : "disabled"}>CONFIRM</button>
+            <button id="hintBtn" class="hintbtn">${showHint ? "HIDE" : "HINT"}</button>
+          </section>
+
+          ${status === "ok" ? `<div class="status ok">✓ CORRECT — DIGIT ${p.unlocks} UNLOCKED</div>` : ""}
+          ${status === "err" ? `<div class="status err">✗ INCORRECT — TRY AGAIN</div>` : ""}
+        </main>
+      `;
+
+      document.getElementById("printGame").onclick = renderPrint;
+
+      const answerInput = document.getElementById("answerInput");
+      answerInput.focus();
+      answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
+      answerInput.addEventListener("input", e => { input = e.target.value; });
+      answerInput.addEventListener("keydown", e => {
+        if (e.key === "Enter" && input.trim()) handleSubmit();
+      });
+
+      document.getElementById("confirmBtn").onclick = handleSubmit;
+      document.getElementById("hintBtn").onclick = () => {
+        showHint = !showHint;
+        renderGame();
+      };
+    }
+
+    function handleSubmit() {
+      const val = input.trim().toUpperCase();
+      if (!val) return;
+      const p = PUZZLES[puzzleIdx];
+
+      if (val === p.answer) {
+        unlockedDigits.push(p.unlocks);
+        latestPop = unlockedDigits.length - 1;
+        status = "ok";
+        renderGame();
+
+        setTimeout(() => {
+          status = null;
+          input = "";
+          showHint = false;
+          if (puzzleIdx + 1 >= PUZZLES.length) {
+            screen = "success";
+            renderSuccess();
+          } else {
+            puzzleIdx += 1;
+            renderGame();
+          }
+        }, 1400);
+      } else {
+        status = "err";
+        renderGame();
+        setTimeout(() => {
+          status = null;
+          input = "";
+          renderGame();
+        }, 1000);
+      }
+    }
+
+    function renderSuccess() {
+      clearInterval(timerId);
+      app.innerHTML = `
+        <main class="root end-screen">
+          <section class="end-card hud-panel">
+            <div class="end-title" style="color:var(--ok);animation:defused 1.2s ease forwards;text-shadow:0 0 50px rgba(68,255,170,.8);">DEFUSED</div>
+            <div class="section-label" style="color:#2d8a5c;margin-bottom:30px;">DETONATION SEQUENCE TERMINATED</div>
+
+            <div class="code-panel hud-panel" style="max-width:100%;border-color:rgba(68,255,170,.38);">
+              <div class="section-label" style="color:#2d8a5c;">DISARM CODE</div>
+              <div class="code-slots">
+                ${unlockedDigits.map((d, i) => `<div class="slot revealed" style="color:var(--ok);border-color:rgba(68,255,170,.65);background:rgba(68,255,170,.08);animation:fadeUp .4s ease ${i * .12}s both;">${d}</div>`).join("")}
+              </div>
+            </div>
+
+            <div style="font-size:13px;color:#2d8a5c;line-height:1.9;margin-top:22px;">
+              Time remaining: <span style="color:var(--ok);">${fmt(time)}</span><br>
+              All 5 modules solved. Status: <span style="color:var(--ok);">MISSION ACCOMPLISHED</span>
+            </div>
+          </section>
+        </main>
+      `;
+    }
+
+    function renderFailed() {
+      clearInterval(timerId);
+      app.innerHTML = `
+        <main class="root end-screen">
+          <section class="end-card hud-panel">
+            <div class="end-title" style="color:var(--red2);text-shadow:0 0 50px rgba(255,80,50,.8);">DETONATED</div>
+            <div class="section-label" style="color:#7a2717;margin-bottom:30px;">TIME ELAPSED · MISSION FAILED</div>
+            <div style="font-size:13px;color:#8c3624;line-height:1.9;margin-bottom:32px;">
+              The device detonated before the disarm<br>code could be entered. Status: <span style="color:var(--red2);">COMPROMISED</span>
+            </div>
+            <button class="btn-primary" id="retryBtn" style="display:inline-block;flex:none;padding:15px 32px;">RETRY MISSION</button>
+          </section>
+        </main>
+      `;
+      document.getElementById("retryBtn").onclick = () => window.location.reload();
+    }
+
+    renderIntro();
+  </script>
+</body>
+</html>
